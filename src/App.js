@@ -6,47 +6,77 @@ import 'jquery/dist/jquery.min.js';
 import $ from 'jquery';
 
 class Home extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      // Mock data for contacts
+      contacts: [
+        { name: "Alice", lastMessage: "Let's meet tomorrow.", date: "Oct 16, 2024" },
+        { name: "Bob", lastMessage: "See you soon!", date: "Oct 17, 2024" },
+        { name: "Charlie", lastMessage: "Got the updates.", date: "Oct 15, 2024" }
+      ],
+      // Chat messages per contact
+      chats: {
+        Alice: [
+          { sender: "Alice", message: "Hi, how are you doing?", time: "8:40 AM", senderImg: "https://png.pngtree.com/png-clipart/20210311/original/pngtree-number-36-golden-font-png-image_5985724.jpg" },
+          { sender: "You", message: "I'm doing great, thanks for asking!", time: "8:45 AM", senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png" }
+        ],
+        Bob: [
+          { sender: "Bob", message: "Hey! What's up?", time: "9:00 AM", senderImg: "https://example.com/bob_img.png" },
+          { sender: "You", message: "Not much, just working on a project.", time: "9:05 AM", senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png" }
+        ],
+        Charlie: [
+          { sender: "Charlie", message: "Did you finish the task?", time: "10:00 AM", senderImg: "https://example.com/charlie_img.png" },
+          { sender: "You", message: "Yes, just sent it over.", time: "10:05 AM", senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png" }
+        ]
+      },
+      // Track selected contact
+      selectedContact: "Alice",
+      // Input for new message
+      newMessage: ""
+    };
+  }
+
   componentDidMount() {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
     });
   }
 
-  render() {
-    // Mock data for contacts
-    const contacts = [
-      { name: "Alice", lastMessage: "Let's meet tomorrow.", date: "Oct 16, 2024" },
-      { name: "Bob", lastMessage: "Can you send me the report?", date: "Oct 15, 2024" },
-      { name: "Charlie", lastMessage: "Lunch at 1 PM?", date: "Oct 14, 2024" },
-    ];
+  handleContactClick(contactName) {
+    this.setState({ selectedContact: contactName });
+  }
 
-    // Mock data for chat messages
-    const messages = [
-      {
-        sender: "Alice",
-        message: "Hi, how are you doing?",
-        time: "8:40 AM",
-        senderImg: "https://png.pngtree.com/png-clipart/20210311/original/pngtree-number-36-golden-font-png-image_5985724.jpg"
-      },
-      {
-        sender: "You",
-        message: "I'm doing great, thanks for asking!",
-        time: "8:45 AM",
-        senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png"
-      },
-      {
-        sender: "Alice",
-        message: "Are you free this weekend?",
-        time: "8:50 AM",
-        senderImg: "https://png.pngtree.com/png-clipart/20210311/original/pngtree-number-36-golden-font-png-image_5985724.jpg"
-      },
-      {
-        sender: "You",
-        message: "Yes, I am! Let's catch up.",
-        time: "8:55 AM",
-        senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png"
-      }
-    ];
+  handleInputChange = (e) => {
+    this.setState({ newMessage: e.target.value });
+  };
+
+  handleSendMessage = () => {
+    const { selectedContact, newMessage, chats } = this.state;
+
+    if (newMessage.trim() === "") return; // Don't send empty messages
+
+    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Add the new message to the chat of the selected contact
+    const updatedChats = {
+      ...chats,
+      [selectedContact]: [
+        ...chats[selectedContact],
+        { sender: "You", message: newMessage, time: currentTime, senderImg: "https://therichpost.com/wp-content/uploads/2020/06/avatar2.png" }
+      ]
+    };
+
+    // Update the chats and clear the input field
+    this.setState({
+      chats: updatedChats,
+      newMessage: ""
+    });
+  };
+
+  render() {
+    const { contacts, chats, selectedContact, newMessage } = this.state;
+    const selectedMessages = chats[selectedContact] || [];
 
     return (
       <div className="maincontainer">
@@ -65,7 +95,11 @@ class Home extends React.Component {
                 <div className="card-body contacts_body">
                   <ul className="contacts">
                     {contacts.map((contact, index) => (
-                      <li key={index} className={index === 0 ? "active" : ""}>
+                      <li
+                        key={index}
+                        className={contact.name === selectedContact ? "active" : ""}
+                        onClick={() => this.handleContactClick(contact.name)}
+                      >
                         <div className="d-flex bd-highlight">
                           <div className="user_info">
                             <span>{contact.name}</span>
@@ -85,23 +119,36 @@ class Home extends React.Component {
                 <div className="card-header msg_head">
                   <div className="d-flex bd-highlight">
                     <div className="img_cont">
-                      <img src="https://png.pngtree.com/png-clipart/20210311/original/pngtree-number-36-golden-font-png-image_5985724.jpg" className="rounded-circle user_img" alt="User" />
+                      <img
+                        src="https://png.pngtree.com/png-clipart/20210311/original/pngtree-number-36-golden-font-png-image_5985724.jpg"
+                        className="rounded-circle user_img"
+                        alt="User"
+                      />
                       <span className="online_icon"></span>
                     </div>
                     <div className="user_info">
-                      <span>Chat with Alice</span>
+                      <span>Chat with {selectedContact}</span>
                     </div>
                   </div>
                 </div>
                 <div className="card-body msg_card_body">
-                  {messages.map((msg, index) => (
-                    <div key={index} className={`d-flex justify-content-${msg.sender === "You" ? "end" : "start"} mb-4`}>
+                  {selectedMessages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`d-flex justify-content-${msg.sender === "You" ? "end" : "start"} mb-4`}
+                    >
                       <div className="img_cont_msg">
-                        <img src={msg.senderImg} className="rounded-circle user_img_msg" alt={msg.sender} />
+                        <img
+                          src={msg.senderImg}
+                          className="rounded-circle user_img_msg"
+                          alt={msg.sender}
+                        />
                       </div>
                       <div className={`msg_cotainer${msg.sender === "You" ? "_send" : ""}`}>
                         {msg.message}
-                        <span className={`msg_time${msg.sender === "You" ? "_send" : ""}`}>{msg.time}</span>
+                        <span className={`msg_time${msg.sender === "You" ? "_send" : ""}`}>
+                          {msg.time}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -109,11 +156,20 @@ class Home extends React.Component {
                 <div className="card-footer">
                   <div className="input-group">
                     <div className="input-group-append">
-                      <span className="input-group-text attach_btn"><i className="fas fa-paperclip"></i></span>
+                      <span className="input-group-text attach_btn">
+                        <i className="fas fa-paperclip"></i>
+                      </span>
                     </div>
-                    <textarea className="form-control type_msg" placeholder="Type your message..."></textarea>
+                    <textarea
+                      className="form-control type_msg"
+                      placeholder="Type your message..."
+                      value={newMessage}
+                      onChange={this.handleInputChange}
+                    ></textarea>
                     <div className="input-group-append">
-                      <span className="input-group-text send_btn"><i className="fas fa-location-arrow"></i></span>
+                      <span className="input-group-text send_btn" onClick={this.handleSendMessage}>
+                        <i className="fas fa-location-arrow"></i>
+                      </span>
                     </div>
                   </div>
                 </div>

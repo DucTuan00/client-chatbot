@@ -73,6 +73,7 @@ html {
   border: 0 !important;
   color: white !important;
   cursor: pointer;
+  height: 100%;
 }
 
 .send_btn {
@@ -81,6 +82,7 @@ html {
   border: 0 !important;
   color: white !important;
   cursor: pointer;
+  height: 100%;
 }
 
 .search_btn {
