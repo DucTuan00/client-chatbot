@@ -1,0 +1,7 @@
+.custom-color{
+    background-color: black;
+}
+.bg-fullscreen {
+    background-size: cover; /* Để hình ảnh phủ toàn bộ phần tử */
+    height: 100vh; /* Chiều cao toàn màn hình */
+}
