@@ -35,9 +35,6 @@ const Navbar = ({ userName, onUserLogin }) => {
     <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div className="container-fluid">
-          {/* <div class="top">
-            <img src={logo} alt="Logo" style={{ width: '100px', height: '50px', marginRight: '5px' }} class="img-logo"></img>
-          </div> */}
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav mb-2 mb-lg-0">
               <li className="nav-item">

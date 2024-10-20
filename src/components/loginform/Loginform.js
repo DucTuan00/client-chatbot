@@ -46,16 +46,13 @@ const Loginform = () => {
     return (
         <div className="bg-fullscreen py-3 py-md-5">
             <div className="container">
-                <div className="row justify-content-md-end">
+                <div className="row justify-content-md-center">
                     <div className="col-12 col-md-11 col-lg-8 col-xl-7 col-xxl-6">
                         <div className="p-4 p-md-5 rounded shadow-sm custom-color">
                             <div className="row">
                                 <div className="col-12">
-                                    <div className="text-center mb-5">
-                                        <a href="#!">
-                                            <img src="logo.png" alt="BootstrapBrain Logo" width="150px" height="75px" />
-                                        </a>
-                                    </div>
+{/* logo */}
+                                    <div className="text-center mb-5"></div>
                                 </div>
                             </div>
                             <form onSubmit={handleSubmit}>
@@ -90,7 +87,7 @@ const Loginform = () => {
                                     )}
                                     <div className="col-12">
                                         <div className="d-grid">
-                                            <button className="btn btn-primary btn-lg" type="submit">
+                                            <button type="submit">
                                                 {isLogin ? 'Log In' : 'Register'}
                                             </button>
                                         </div>
