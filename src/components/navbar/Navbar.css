@@ -12,7 +12,7 @@
     margin-right: 10px;
 }
 nav {
-    background: linear-gradient(to right, #82ccdd, #78e08f);
+    background: black;
     display: flex;
     justify-content: space-between;
     align-items: center;
