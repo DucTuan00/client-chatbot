@@ -1,0 +1,33 @@
+.custom-color{
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.37);
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+}
+.bg-fullscreen {
+    background: url('./bg.png') no-repeat center center;
+    background-size: cover; /* Để hình ảnh phủ toàn bộ phần tử */
+    height: 100vh; /* Chiều cao toàn màn hình */
+}
+button{
+    background-color: #271930;
+    color: #ffffff;
+    border: none;
+    padding: 15px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px; 
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+button:hover{
+    color: #000000;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #ffffff;
+}

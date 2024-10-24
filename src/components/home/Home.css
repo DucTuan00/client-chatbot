@@ -4,7 +4,7 @@ html {
   margin: 0;
   background: #7F7FD5;
   background: -webkit-linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
-  background: linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
+  background: linear-gradient(to right, #7dedf5, #86A8E7, #7F7FD5);
 }
 
 .chat {
@@ -47,6 +47,11 @@ html {
   background-color: rgba(0, 0, 0, 0.3) !important;
   border: 0 !important;
   color: white !important;
+}
+
+.input-group input::placeholder, 
+.input-group textarea::placeholder {
+  color: white;
 }
 
 .search:focus {
@@ -162,7 +167,11 @@ html {
 
 .user_info p {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.user_info small {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .video_cam {

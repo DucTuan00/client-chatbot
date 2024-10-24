@@ -1,0 +1,24 @@
+.dark-mode-btns{
+    background-color: black;
+    color: #fff;
+    border: 1px solid #fff;
+    outline: none;
+}
+.dark-mode-btns:hover{
+    background-color: #fff;
+    color: black;
+}
+.custom-gap {
+    margin-right: 10px;
+}
+nav {
+    background: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+#nav-dropdown{
+    color: white;
+    font-weight: bold;
+}
