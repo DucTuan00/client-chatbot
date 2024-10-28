@@ -11,7 +11,7 @@ import remarkGfm from 'remark-gfm';
 import style from './markdown-styles.module.css';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { dracula } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import {xonokai} from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 function Home() {
   const [sessions, setSessions] = useState([]);
@@ -170,9 +170,9 @@ function Home() {
                           code({ node, inline, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(className || '');
                             return !inline && match ? (
-                              <div style={{ position: 'relative' }}>
+                              <div class="code_block" style={{ position: 'relative'  }}>
                                 <SyntaxHighlighter
-                                  style={dracula} // or light, etc.
+                                  style={xonokai} // or light, etc.
                                   language={match[1]}
                                   PreTag="div"
                                   {...props}
