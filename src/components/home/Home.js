@@ -8,11 +8,6 @@ import 'jquery/dist/jquery.min.js';
 import $ from 'jquery';
 import remarkGfm from 'remark-gfm';
 
-import style from './markdown-styles.module.css';
-
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { dracula } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-
 function Home() {
   const [sessions, setSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
@@ -157,28 +152,7 @@ function Home() {
                 {chatHistory.map((msg, index) => (
                   <div key={index} className={`d-flex justify-content-${msg.role === "user" ? "end" : "start"} mb-4`}>
                     <div className={`msg_cotainer${msg.role === "user" ? "_send" : ""}`}>
-                      <ReactMarkdown children={msg.content} 
-                      remarkPlugins={[remarkGfm]}
-                      className={style.reactMarkDown}
-                      components={{
-                        code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <SyntaxHighlighter
-                              style={dracula} // or light, etc.
-                              language={match[1]}
-                              PreTag="div"
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }} />
+                      <ReactMarkdown children={msg.content} remarkPlugins={[remarkGfm]} />
                       <span className={`msg_time${msg.role === "user" ? "_send" : ""}`}>{msg.time}</span>
                     </div>
                   </div>
