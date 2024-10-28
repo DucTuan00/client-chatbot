@@ -20,13 +20,19 @@ function Home() {
   const [message, setMessage] = useState('');
   const msgCardBodyRef = useRef(null);
 
+  // Function to copy code to clipboard
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Code copied to clipboard!");
+    });
+  };
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
     if (msgCardBodyRef.current) {
       msgCardBodyRef.current.scrollTop = msgCardBodyRef.current.scrollHeight;
     }
   }, [chatHistory]);
-  
+
   useEffect(() => {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
@@ -122,8 +128,8 @@ function Home() {
                 </div>
               </div>
               <div className="card-body contacts_body"
-                  ref={msgCardBodyRef}
-                  style={{ maxHeight: '530px', overflowY: 'auto' }}
+                ref={msgCardBodyRef}
+                style={{ maxHeight: '530px', overflowY: 'auto' }}
               >
                 <ul className="contacts">
                   {sessions.map((session, index) => (
@@ -151,34 +157,50 @@ function Home() {
                 </div>
               </div>
               <div className="card-body msg_card_body"
-                  ref={msgCardBodyRef}
-                  style={{ maxHeight: '500px', overflowY: 'auto' }}
+                ref={msgCardBodyRef}
+                style={{ maxHeight: '500px', overflowY: 'auto' }}
               >
                 {chatHistory.map((msg, index) => (
                   <div key={index} className={`d-flex justify-content-${msg.role === "user" ? "end" : "start"} mb-4`}>
                     <div className={`msg_cotainer${msg.role === "user" ? "_send" : ""}`}>
-                      <ReactMarkdown children={msg.content} 
-                      remarkPlugins={[remarkGfm]}
-                      className={style.reactMarkDown}
-                      components={{
-                        code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <SyntaxHighlighter
-                              style={dracula} // or light, etc.
-                              language={match[1]}
-                              PreTag="div"
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }} />
+                      <ReactMarkdown children={msg.content}
+                        remarkPlugins={[remarkGfm]}
+                        className={style.reactMarkDown}
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <div style={{ position: 'relative' }}>
+                                <SyntaxHighlighter
+                                  style={dracula} // or light, etc.
+                                  language={match[1]}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, '')}
+                                </SyntaxHighlighter>
+                                <button
+                                  onClick={() => copyToClipboard(String(children).replace(/\n$/, ''))}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '5px',
+                                    right: '5px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'white',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                        }} />
                       <span className={`msg_time${msg.role === "user" ? "_send" : ""}`}>{msg.time}</span>
                     </div>
                   </div>
