@@ -49,6 +49,17 @@ html {
   color: white !important;
 }
 
+.btn-outline-light {
+  border-radius: 15px !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 0 !important;
+  margin-bottom: 10px;
+}
+
+.btn-outline-light:hover {
+  background-color: rgb(234, 229, 229) !important;
+}
+
 .input-group input::placeholder, 
 .input-group textarea::placeholder {
   color: white;
@@ -102,6 +113,7 @@ html {
 .contacts {
   list-style: none;
   padding: 0;
+  cursor: pointer;
 }
 
 .contacts li {
