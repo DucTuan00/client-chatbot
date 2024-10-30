@@ -1,46 +1,134 @@
 import React, { useState } from 'react';
-import "./Loginform.css"
+import "./Loginform.css";
 import { useNavigate } from 'react-router-dom';
 
-const Loginform = () => {
-    // Mock data
-    const [email, setEmail] = useState('user@example.com');
-    const [password, setPassword] = useState('password123');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState('John Doe');
-    const [isLogin, setIsLogin] = useState(true);
-    const [message, setMessage] = useState('');
+import { jwtDecode } from 'jwt-decode'; // Use named import
 
-    const navigate = useNavigate();
-    const handleSubmit = (e) => {
+const Loginform = ({ onUserLogin }) => {
+    // // Mock data
+    // const [email, setEmail] = useState('user@example.com');
+    // const [password, setPassword] = useState('password123');
+    // const [confirmPassword, setConfirmPassword] = useState('');
+    // const [name, setName] = useState('John Doe'); 
+    // const [isLogin, setIsLogin] = useState(true);
+    // const [message, setMessage] = useState('');
+
+    // const navigate = useNavigate();
+    // const handleSubmit = (e) => {
  
-        e.preventDefault();
-        // Here you would handle form submission, e.g., authentication
+    //     e.preventDefault();
+    //     // Here you would handle form submission, e.g., authentication
+    //     if (isLogin) {
+    //         // Mock login logic
+    //         if (email !== 'user@example.com' || password !== 'password123') {
+    //             setMessage('Invalid email or password');
+    //         } else {
+    //             setMessage('Login successful!');
+    //             navigate('/home');
+    //         }
+    //     } else {
+    //         // Mock registration logic
+    //         if (password !== confirmPassword) {
+    //             setMessage('Passwords do not match');
+    //         } else {
+    //             setMessage('Registration successful!');
+    //         }
+    //     }
+    // };
+
+    // const toggleMode = () => {
+    //     setIsLogin(!isLogin);
+    //     setMessage(''); // Clear message on toggle
+    //     setEmail(''); // Clear email
+    //     setPassword(''); // Clear password
+    //     setConfirmPassword(''); // Clear confirm password
+    //     setName(''); // Clear name
+    // };
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [name, setName] = useState(''); // New name state
+    const [message, setMessage] = useState('');
+    const [isLogin, setIsLogin] = useState(true); // toggle between login and registration
+    const navigate = useNavigate();
+    const login = async (email, password) => {
+        try {
+            const response = await fetch('http://localhost:3002/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+            if (response.status !== 302) {
+                throw new Error('Login failed');
+            }
+            const user = await response.json();
+            // console.log(token)
+            // localStorage.setItem('token', token);
+
+            // const userData = { email, password, token}; // replace with actual API call
+
+            // Simulate login
+            if (email && password) { // you should validate these values
+                // Decode the token to get the user's name
+                localStorage.setItem('token', user.token);
+                const decodedToken = jwtDecode(user.token);
+                const userName = decodedToken.user.name;
+                
+
+                navigate('/'); // Redirect to result page
+                // Update the username in the App component
+                onUserLogin(userName);
+                
+            }
+        } catch (error) {
+            console.error(error);
+            setMessage('Login failed. Please check your credentials.');
+        }
+    };
+
+    const register = async (name, email, password) => {
+        try {
+            const response = await fetch('http://localhost:3002/users/registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password }),
+            });
+            if (!response.ok) {
+                throw new Error('Registration failed');
+            }
+            setMessage('Registration successful. Please log in.');
+            toggleMode(); // Automatically switch to login mode
+        } catch (error) {
+            console.error(error);
+            setMessage('Registration failed. Please try again.');
+        }
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
         if (isLogin) {
-            // Mock login logic
-            if (email !== 'user@example.com' || password !== 'password123') {
-                setMessage('Invalid email or password');
-            } else {
-                setMessage('Login successful!');
-                navigate('/home');
-            }
+            login(email, password);
         } else {
-            // Mock registration logic
             if (password !== confirmPassword) {
-                setMessage('Passwords do not match');
-            } else {
-                setMessage('Registration successful!');
+                setMessage('Passwords do not match.');
+                return;
             }
+            register(name, email, password); // Pass name to register function
         }
     };
 
     const toggleMode = () => {
         setIsLogin(!isLogin);
-        setMessage(''); // Clear message on toggle
-        setEmail(''); // Clear email
-        setPassword(''); // Clear password
-        setConfirmPassword(''); // Clear confirm password
-        setName(''); // Clear name
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setName(''); // Reset name field
+        setMessage('');
     };
 
     return (
