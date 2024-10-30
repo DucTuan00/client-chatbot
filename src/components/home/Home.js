@@ -18,7 +18,9 @@ function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
   const msgCardBodyRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Function to copy code to clipboard
   const copyToClipboard = (text) => {
@@ -26,6 +28,27 @@ function Home() {
       alert("Code copied to clipboard!");
     });
   };
+
+  const sendFile = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('sessionId', currentSessionId);
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/chat/file', formData);
+      setChatHistory([...chatHistory, { role: 'user', content: response.data.filename }]);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error('Error sending file:', err);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
+
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
     if (msgCardBodyRef.current) {
@@ -209,9 +232,23 @@ function Home() {
               <div className="card-footer">
                 <div className="input-group">
                   <div className="input-group-append">
-                    <span className="input-group-text attach_btn">
+                  <span className="input-group-text attach_btn">
+                  <button
+                      className="btn btn-default"
+                      style={{ border: 'none', padding: '0' }}
+                      onClick={() => fileInputRef.current.click()}
+                    >
                       <i className="fas fa-paperclip"></i>
+                    </button>
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                      />
                     </span>
+                    
                   </div>
                   <textarea
                     className="form-control type_msg"
