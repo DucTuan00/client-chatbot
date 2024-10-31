@@ -1,95 +1,49 @@
 import React, { useState } from 'react';
-import "./Loginform.css";
+import './Loginform.css';
 import { useNavigate } from 'react-router-dom';
 
-import { jwtDecode } from 'jwt-decode'; // Use named import
-
 const Loginform = ({ onUserLogin }) => {
-    // // Mock data
-    // const [email, setEmail] = useState('user@example.com');
-    // const [password, setPassword] = useState('password123');
-    // const [confirmPassword, setConfirmPassword] = useState('');
-    // const [name, setName] = useState('John Doe'); 
-    // const [isLogin, setIsLogin] = useState(true);
-    // const [message, setMessage] = useState('');
-
-    // const navigate = useNavigate();
-    // const handleSubmit = (e) => {
- 
-    //     e.preventDefault();
-    //     // Here you would handle form submission, e.g., authentication
-    //     if (isLogin) {
-    //         // Mock login logic
-    //         if (email !== 'user@example.com' || password !== 'password123') {
-    //             setMessage('Invalid email or password');
-    //         } else {
-    //             setMessage('Login successful!');
-    //             navigate('/home');
-    //         }
-    //     } else {
-    //         // Mock registration logic
-    //         if (password !== confirmPassword) {
-    //             setMessage('Passwords do not match');
-    //         } else {
-    //             setMessage('Registration successful!');
-    //         }
-    //     }
-    // };
-
-    // const toggleMode = () => {
-    //     setIsLogin(!isLogin);
-    //     setMessage(''); // Clear message on toggle
-    //     setEmail(''); // Clear email
-    //     setPassword(''); // Clear password
-    //     setConfirmPassword(''); // Clear confirm password
-    //     setName(''); // Clear name
-    // };
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState(''); // New name state
+    const [name, setName] = useState('');
     const [message, setMessage] = useState('');
-    const [isLogin, setIsLogin] = useState(true); // toggle between login and registration
+    const [isLogin, setIsLogin] = useState(true);
     const navigate = useNavigate();
-    const login = async (email, password) => {
+
+    const login = async () => {
         try {
             const response = await fetch('http://localhost:3002/users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password }), // Use state values here
             });
-            if (response.status !== 302) {
+
+            if (!response.ok) {
                 throw new Error('Login failed');
             }
-            const user = await response.json();
-            // console.log(token)
-            // localStorage.setItem('token', token);
 
-            // const userData = { email, password, token}; // replace with actual API call
+            const data = await response.json();
+            console.log(data); // Check the successful login response
+            // Optionally, store token or user info here
+            // e.g., localStorage.setItem('token', data.token);
+            // onUserLogin(data.user); // If you want to pass user data to the parent component
 
-            // Simulate login
-            if (email && password) { // you should validate these values
-                // Decode the token to get the user's name
-                localStorage.setItem('token', user.token);
-                const decodedToken = jwtDecode(user.token);
-                const userName = decodedToken.user.name;
-                
-
-                navigate('/'); // Redirect to result page
-                // Update the username in the App component
-                onUserLogin(userName);
-                
-            }
+            navigate('/dashboard'); // Navigate to a different page on successful login
         } catch (error) {
             console.error(error);
-            setMessage('Login failed. Please check your credentials.');
+            setMessage('Login failed. Please try again.');
         }
     };
 
     const register = async (name, email, password) => {
+        if (!name || !email || !password) {
+            setMessage('Please fill in all fields.');
+            return;
+        }
+
         try {
             const response = await fetch('http://localhost:3002/users/registration', {
                 method: 'POST',
@@ -98,27 +52,32 @@ const Loginform = ({ onUserLogin }) => {
                 },
                 body: JSON.stringify({ name, email, password }),
             });
+
+            const responseData = await response.json(); // Parse the response
+            console.log('Response Data:', responseData);
+
             if (!response.ok) {
-                throw new Error('Registration failed');
+                throw new Error(responseData.error || 'Registration failed');
             }
-            setMessage('Registration successful. Please log in.');
-            toggleMode(); // Automatically switch to login mode
+
+            setMessage('Registration successful! Please log in.');
+            toggleMode();
         } catch (error) {
             console.error(error);
-            setMessage('Registration failed. Please try again.');
+            setMessage(`Registration failed: ${error.message}`);
         }
     };
 
     const handleSubmit = (event) => {
         event.preventDefault();
         if (isLogin) {
-            login(email, password);
+            login(); // Call login without parameters, using state
         } else {
             if (password !== confirmPassword) {
                 setMessage('Passwords do not match.');
                 return;
             }
-            register(name, email, password); // Pass name to register function
+            register(name, email, password);
         }
     };
 
@@ -127,7 +86,7 @@ const Loginform = ({ onUserLogin }) => {
         setEmail('');
         setPassword('');
         setConfirmPassword('');
-        setName(''); // Reset name field
+        setName('');
         setMessage('');
     };
 
@@ -137,12 +96,6 @@ const Loginform = ({ onUserLogin }) => {
                 <div className="row justify-content-md-center">
                     <div className="col-12 col-md-11 col-lg-8 col-xl-7 col-xxl-6">
                         <div className="p-4 p-md-5 rounded shadow-sm custom-color">
-                            <div className="row">
-                                <div className="col-12">
-{/* logo */}
-                                    <div className="text-center mb-5"></div>
-                                </div>
-                            </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row gy-3 gy-md-4 overflow-hidden">
                                     <div className="col-12">

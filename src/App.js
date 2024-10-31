@@ -19,7 +19,7 @@ const App = () => {
     <Router>
       <Navbar userName={userName} onLogout={handleUserLogout} /> {/* Pass username and logout function to Navbar */}
       <Routes>
-        <Route path='/home' element={userName ? <Home /> : <Navigate to='/login' />} /> {/* Redirect to login if not logged in */}
+        <Route path='/home' element={userName ? <Home /> : <Navigate to='/login' />} /> {/* Redirect to home if logged in */}
         <Route path='/login' element={<Loginform onUserLogin={handleUserLogin} />} />
         <Route path='/' element={<Navigate to='/login' />} /> {/* Redirect root path to login */}
       </Routes>
