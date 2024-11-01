@@ -54,7 +54,10 @@ function Home() {
   };
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file.name);
+    }
   };
 
   // Cuộn đoạn chat xuống cuối khi bấm vào session
@@ -237,6 +240,16 @@ function Home() {
                   </div>
                 ))}
               </div>
+              {selectedFile && (
+                <div className="selected-file-container">
+                  <span className="selected-file-name">
+                    {selectedFile}
+                  </span>
+                  <span className="remove-file-btn" onClick={() => setSelectedFile("")}>
+                    Xóa
+                  </span>
+                </div>
+              )}
               <div className="card-footer">
                 <div className="input-group">
                   <div className="input-group-append">
