@@ -345,3 +345,13 @@ html {
   background-color: white;
   color: black;
 }
+
+.delete-session {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.delete-session span {
+  color: white;
+  cursor: pointer;
+}

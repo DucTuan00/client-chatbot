@@ -60,6 +60,11 @@ function Home() {
     }
   };
 
+  //Xóa session
+  const deleteSession = (event) => {
+
+  }
+
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
     if (msgCardBodyRef.current) {
@@ -172,9 +177,12 @@ function Home() {
                       className={session.sessionId === currentSessionId ? "active" : ""}
                       onClick={() => setCurrentSessionId(session.sessionId)}
                     >
-                      <div className="d-flex bd-highlight">
+                      <div className="d-flex justify-content-between bd-highlight">
                         <div className="user_info">
                           <span>{session.sessionId}</span>
+                        </div>
+                        <div className="delete-session" onClick={() => { deleteSession(); }}>
+                          <span>Xóa</span>
                         </div>
                       </div>
                     </li>
