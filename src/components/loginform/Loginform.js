@@ -1,46 +1,96 @@
 import React, { useState } from 'react';
-import "./Loginform.css"
+import './Loginform.css';
 import { useNavigate } from 'react-router-dom';
 
-const Loginform = () => {
-    // Mock data
-    const [email, setEmail] = useState('user@example.com');
-    const [password, setPassword] = useState('password123');
+const Loginform = ({ onUserLogin }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState('John Doe');
-    const [isLogin, setIsLogin] = useState(true);
+    const [name, setName] = useState('');
     const [message, setMessage] = useState('');
-
+    const [isLogin, setIsLogin] = useState(true);
     const navigate = useNavigate();
-    const handleSubmit = (e) => {
- 
-        e.preventDefault();
-        // Here you would handle form submission, e.g., authentication
+
+    const login = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/users/login', { // Update URL to port 5000
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+    
+            const data = await response.json();
+            console.log(data); // Check the successful login response
+    
+            // Optionally, store token or user info here
+            // e.g., localStorage.setItem('token', data.token);
+            onUserLogin(email); // Pass the email or other relevant data to the parent component
+    
+            navigate('/'); // Navigate to home after successful login
+        } catch (error) {
+            console.error(error);
+            setMessage('Login failed. Please try again.');
+        }
+    };
+    
+    
+
+    const register = async (name, email, password) => {
+        if (!name || !email || !password) {
+            setMessage('Please fill in all fields.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/users/registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            const responseData = await response.json(); // Parse the response
+            console.log('Response Data:', responseData);
+
+            if (!response.ok) {
+                throw new Error(responseData.error || 'Registration failed');
+            }
+
+            setMessage('Registration successful! Please log in.');
+            toggleMode();
+        } catch (error) {
+            console.error(error);
+            setMessage(`Registration failed: ${error.message}`);
+        }
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
         if (isLogin) {
-            // Mock login logic
-            if (email !== 'user@example.com' || password !== 'password123') {
-                setMessage('Invalid email or password');
-            } else {
-                setMessage('Login successful!');
-                navigate('/home');
-            }
+            login(); // Call login without parameters, using state
         } else {
-            // Mock registration logic
             if (password !== confirmPassword) {
-                setMessage('Passwords do not match');
-            } else {
-                setMessage('Registration successful!');
+                setMessage('Passwords do not match.');
+                return;
             }
+            register(name, email, password);
         }
     };
 
     const toggleMode = () => {
         setIsLogin(!isLogin);
-        setMessage(''); // Clear message on toggle
-        setEmail(''); // Clear email
-        setPassword(''); // Clear password
-        setConfirmPassword(''); // Clear confirm password
-        setName(''); // Clear name
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setName('');
+        setMessage('');
     };
 
     return (
@@ -49,12 +99,6 @@ const Loginform = () => {
                 <div className="row justify-content-md-center">
                     <div className="col-12 col-md-11 col-lg-8 col-xl-7 col-xxl-6">
                         <div className="p-4 p-md-5 rounded shadow-sm custom-color">
-                            <div className="row">
-                                <div className="col-12">
-{/* logo */}
-                                    <div className="text-center mb-5"></div>
-                                </div>
-                            </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="row gy-3 gy-md-4 overflow-hidden">
                                     <div className="col-12">
