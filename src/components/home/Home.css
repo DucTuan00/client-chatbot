@@ -308,3 +308,50 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #5454b6;
 }
+
+.selected-file-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  max-width: 100%;
+}
+
+.selected-file-name {
+  display: inline-block;
+  align-items: center;
+  padding: 5px 10px;
+  margin-left: 16px;
+  color: white;
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  max-width: 20%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remove-file-btn {
+  font-size: 14px;
+  margin-left: 3px;
+  cursor: pointer;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 5px 10px;
+  border-radius: 15px;
+}
+
+.remove-file-btn:hover {
+  background-color: white;
+  color: black;
+}
+
+.delete-session {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.delete-session span {
+  color: white;
+  cursor: pointer;
+}
