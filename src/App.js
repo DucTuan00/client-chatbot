@@ -17,11 +17,10 @@ const App = () => {
 
   return (
     <Router>
-      <Navbar userName={userName} onLogout={handleUserLogout} /> {/* Pass username and logout function to Navbar */}
+      <Navbar userName={userName} onLogout={handleUserLogout} />
       <Routes>
-        <Route path='/home' element={userName ? <Home /> : <Navigate to='/login' />} /> {/* Redirect to home if logged in */}
+        <Route path='/' element={userName ? <Home /> : <Navigate to='/login' />} />
         <Route path='/login' element={<Loginform onUserLogin={handleUserLogin} />} />
-        <Route path='/' element={<Navigate to='/login' />} /> {/* Redirect root path to login */}
       </Routes>
     </Router>
   );

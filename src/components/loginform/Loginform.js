@@ -13,30 +13,33 @@ const Loginform = ({ onUserLogin }) => {
 
     const login = async () => {
         try {
-            const response = await fetch('http://localhost:3002/users/login', {
+            const response = await fetch('http://localhost:5000/users/login', { // Update URL to port 5000
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }), // Use state values here
+                body: JSON.stringify({ email, password }),
             });
-
+    
             if (!response.ok) {
                 throw new Error('Login failed');
             }
-
+    
             const data = await response.json();
             console.log(data); // Check the successful login response
+    
             // Optionally, store token or user info here
             // e.g., localStorage.setItem('token', data.token);
-            // onUserLogin(data.user); // If you want to pass user data to the parent component
-
-            navigate('/dashboard'); // Navigate to a different page on successful login
+            onUserLogin(email); // Pass the email or other relevant data to the parent component
+    
+            navigate('/'); // Navigate to home after successful login
         } catch (error) {
             console.error(error);
             setMessage('Login failed. Please try again.');
         }
     };
+    
+    
 
     const register = async (name, email, password) => {
         if (!name || !email || !password) {
@@ -45,7 +48,7 @@ const Loginform = ({ onUserLogin }) => {
         }
 
         try {
-            const response = await fetch('http://localhost:3002/users/registration', {
+            const response = await fetch('http://localhost:5000/users/registration', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
