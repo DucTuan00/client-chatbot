@@ -11,7 +11,7 @@ import remarkGfm from 'remark-gfm';
 import style from './markdown-styles.module.css';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import {xonokai} from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { xonokai } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 function Home() {
   const [sessions, setSessions] = useState([]);
@@ -36,13 +36,26 @@ function Home() {
     formData.append('file', selectedFile);
     formData.append('sessionId', currentSessionId);
 
-    try {
-      const response = await axios.post('http://localhost:5000/api/chat/file', formData);
-      setChatHistory([...chatHistory, { role: 'user', content: response.data.filename }]);
-      setSelectedFile(null);
-    } catch (err) {
-      console.error('Error sending file:', err);
-    }
+    // src/components/home/Home.js (39-45)
+
+try {
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4OGZmZjRkLTlmNTItNDExNi04MTkzLTlmY2UxNmMzMmEzMSJ9.nk08_9Gc7LpmYgUx5mCNVVU88z0H2Fk0SyIDeFmwmfQ'; // replace with your actual token
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  };
+
+  // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
+  const response = await axios.post('http://localhost:5000/api/files/', formData);
+  // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
+  setChatHistory([...chatHistory, { role: 'user', content: response.data.filename }]);
+  setSelectedFile(null);
+} catch (err) {
+  console.error('Error sending file:', err);
+}
+
   };
 
   const handleFileChange = (event) => {
@@ -193,7 +206,7 @@ function Home() {
                           code({ node, inline, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(className || '');
                             return !inline && match ? (
-                              <div class="code_block" style={{ position: 'relative'  }}>
+                              <div class="code_block" style={{ position: 'relative' }}>
                                 <SyntaxHighlighter
                                   style={xonokai} // or light, etc.
                                   language={match[1]}
@@ -232,14 +245,14 @@ function Home() {
               <div className="card-footer">
                 <div className="input-group">
                   <div className="input-group-append">
-                  <span className="input-group-text attach_btn">
-                  <button
-                      className="btn btn-default"
-                      style={{ border: 'none', padding: '0' }}
-                      onClick={() => fileInputRef.current.click()}
-                    >
-                      <i className="fas fa-paperclip"></i>
-                    </button>
+                    <span className="input-group-text attach_btn">
+                      <button
+                        className="btn btn-default"
+                        style={{ border: 'none', padding: '0' }}
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        <i className="fas fa-paperclip"></i>
+                      </button>
                       <input
                         type="file"
                         accept="application/pdf"
@@ -248,7 +261,7 @@ function Home() {
                         onChange={handleFileChange}
                       />
                     </span>
-                    
+
                   </div>
                   <textarea
                     className="form-control type_msg"
@@ -257,7 +270,10 @@ function Home() {
                     onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
                   <div className="input-group-append">
-                    <span className="input-group-text send_btn" onClick={sendMessage}>
+                    <span className="input-group-text send_btn" onClick={() => {
+                      sendMessage();
+                      sendFile();
+                    }}>
                       <i className="fas fa-location-arrow"></i>
                     </span>
                   </div>
