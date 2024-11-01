@@ -19,6 +19,7 @@ function Home() {
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [fileId, setFielId] = useState(null)
   const msgCardBodyRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -38,23 +39,17 @@ function Home() {
 
     // src/components/home/Home.js (39-45)
 
-try {
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4OGZmZjRkLTlmNTItNDExNi04MTkzLTlmY2UxNmMzMmEzMSJ9.nk08_9Gc7LpmYgUx5mCNVVU88z0H2Fk0SyIDeFmwmfQ'; // replace with your actual token
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data',
-    },
-  };
+    try {
+      
 
-  // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
-  const response = await axios.post('http://localhost:5000/api/files/', formData);
-  // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
-  setChatHistory([...chatHistory, { role: 'user', content: response.data.filename }]);
-  setSelectedFile(null);
-} catch (err) {
-  console.error('Error sending file:', err);
-}
+      // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
+      const response = await axios.post('http://localhost:5000/api/files/', formData);
+      // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
+      setChatHistory([...chatHistory, { role: 'file', content: response.data.filename }]);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error('Error sending file:', err);
+    }
 
   };
 
@@ -250,6 +245,7 @@ try {
                         className="btn btn-default"
                         style={{ border: 'none', padding: '0' }}
                         onClick={() => fileInputRef.current.click()}
+                        multiple
                       >
                         <i className="fas fa-paperclip"></i>
                       </button>
