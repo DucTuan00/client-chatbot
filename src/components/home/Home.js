@@ -18,8 +18,9 @@ function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileId, setFielId] = useState(null)
+  
+  const [selectedFiles, setSelectedFiles] = useState(null);
+  const [filesId, setFilesId] = useState([])
   const msgCardBodyRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -31,30 +32,34 @@ function Home() {
   };
 
   const sendFile = async () => {
-    if (!selectedFile) return;
+    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0) return;
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('sessionId', currentSessionId);
-
-    // src/components/home/Home.js (39-45)
-
-    try {
-      
-
-      // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
-      const response = await axios.post('http://localhost:5000/api/files/', formData);
-      // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
-      setChatHistory([...chatHistory, { role: 'file', content: response.data.filename }]);
-      setSelectedFile(null);
-    } catch (err) {
-      console.error('Error sending file:', err);
-    }
-
+    // Loop through each selected file
+    Promise.all(selectedFiles.map(async (file) => {
+      try {
+        // Send the file
+        const formData = new FormData(); // Use FormData for file uploads
+        formData.append('file', file);
+        const response = await axios.post('http://localhost:5000/api/files/', formData);
+        setChatHistory((prevHistory) => [...prevHistory, { role: 'filename', content: response.data.filename.substring(37) }, { role: 'fileid', content: response.data.id }]); // Update chat history
+        setFilesId((prevFiles) => [...prevFiles, response.data.id]); // Update filesId state
+      } catch (err) {
+        console.error('Error sending file:', err);
+      }
+    })).then(() => {
+      setSelectedFiles(null);
+    });
   };
 
+
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const files = event.target.files;
+    setSelectedFiles(files ? Array.from(files) : []); // Ensure it's an array
+  };
+
+  const handleSend = async () => {
+    await sendFile();
+    await sendMessage();
   };
 
   // Cuộn đoạn chat xuống cuối khi bấm vào session
@@ -103,7 +108,6 @@ function Home() {
 
   const sendMessage = async () => {
     if (!message.trim()) return;
-
     setChatHistory([...chatHistory, { role: 'user', content: message }]);
     setMessage('');
 
@@ -116,10 +120,12 @@ function Home() {
         body: JSON.stringify({
           sessionId: currentSessionId,
           userMessage: message,
+          fileIds: filesId,
+          fileNames: chatHistory.filter(msg => msg.role === 'filename').map(msg => msg.content),
         }),
         responseType: 'stream',
       });
-
+      setFilesId([])
       let lastAssistantMessage = { role: 'assistant', content: response.data };
 
       setChatHistory((prevHistory) => [...prevHistory, lastAssistantMessage]);
@@ -191,7 +197,7 @@ function Home() {
                 ref={msgCardBodyRef}
                 style={{ maxHeight: '500px', overflowY: 'auto' }}
               >
-                {chatHistory.map((msg, index) => (
+                {chatHistory.filter(msg => msg.role === "user" || msg.role === "assistant").map((msg, index) => (
                   <div key={index} className={`d-flex justify-content-${msg.role === "user" ? "end" : "start"} mb-4`}>
                     <div className={`msg_cotainer${msg.role === "user" ? "_send" : ""}`}>
                       <ReactMarkdown children={msg.content}
@@ -236,6 +242,7 @@ function Home() {
                     </div>
                   </div>
                 ))}
+
               </div>
               <div className="card-footer">
                 <div className="input-group">
@@ -245,7 +252,7 @@ function Home() {
                         className="btn btn-default"
                         style={{ border: 'none', padding: '0' }}
                         onClick={() => fileInputRef.current.click()}
-                        multiple
+
                       >
                         <i className="fas fa-paperclip"></i>
                       </button>
@@ -255,6 +262,7 @@ function Home() {
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
+                        multiple
                       />
                     </span>
 
@@ -266,10 +274,7 @@ function Home() {
                     onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
                   <div className="input-group-append">
-                    <span className="input-group-text send_btn" onClick={() => {
-                      sendMessage();
-                      sendFile();
-                    }}>
+                    <span className="input-group-text send_btn" onClick={handleSend}>
                       <i className="fas fa-location-arrow"></i>
                     </span>
                   </div>
