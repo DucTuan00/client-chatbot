@@ -30,6 +30,17 @@ function Home() {
     });
   };
 
+  // Function to fetch initial sessions
+  const fetchSessions = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/sessions`);
+      setSessions(response.data);
+      if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
+    }
+  };
+
   const sendFile = async () => {
     if (!selectedFile) return;
 
@@ -60,10 +71,19 @@ function Home() {
     }
   };
 
-  //Xóa session
-  const deleteSession = (event) => {
+  // Delete session function
+  const deleteSession = async (sessionId) => {
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/sessions/${sessionId}`);
+      if (response.status === 204) {
+        // Remove the deleted session from the state
+        setSessions(prevSessions => prevSessions.filter(session => session.sessionId !== sessionId));
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error.response ? error.response.data : error.message);
+    }
+  };
 
-  }
 
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
@@ -76,17 +96,7 @@ function Home() {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
     });
-
     // Fetch initial sessions
-    async function fetchSessions() {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/sessions`);
-        setSessions(response.data);
-        if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-      }
-    }
     fetchSessions();
   }, []);
 
@@ -181,7 +191,7 @@ function Home() {
                         <div className="user_info">
                           <span>{session.sessionId}</span>
                         </div>
-                        <div className="delete-session" onClick={() => { deleteSession(); }}>
+                        <div className="delete-session" onClick={() => { deleteSession(session.sessionId); }}>
                           <span>Xóa</span>
                         </div>
                       </div>
