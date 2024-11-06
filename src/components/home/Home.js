@@ -33,7 +33,8 @@ function Home() {
   // Function to fetch initial sessions
   const fetchSessions = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/sessions`);
+      const userId = localStorage.getItem('userId');
+      const response = await axios.get(`http://localhost:5000/api/sessions?userId=${userId}`);
       setSessions(response.data);
       if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
     } catch (err) {
@@ -109,9 +110,10 @@ function Home() {
     }
   }, [currentSessionId]);
 
-  const createNewSession = async () => {
+  const createNewSession = async () => {  
     try {
-      const response = await axios.post('http://localhost:5000/api/sessions');
+      const userId = localStorage.getItem('userId');
+      const response = await axios.post(`http://localhost:5000/api/sessions?userId=${userId}`);
       setSessions([...sessions, response.data]);
       setCurrentSessionId(response.data.sessionId);
     } catch (err) {

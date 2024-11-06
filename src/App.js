@@ -14,8 +14,9 @@ const App = () => {
 
   useEffect(() => {
     // Check if user is logged in and set userName accordingly
+    
     const token = localStorage.getItem('token');
-    setUserName(token ? jwtDecode(token).user.name : null)
+    setUserName(token ? jwtDecode(token).name : null)
   }, [])
 
   return (
