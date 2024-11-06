@@ -19,8 +19,8 @@ function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
-  
-  const [selectedFiles, setSelectedFiles] = useState(null);
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [filesId, setFilesId] = useState([])
   const msgCardBodyRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -33,45 +33,52 @@ function Home() {
   };
 
   const sendFile = async () => {
-    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0){
+    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0) {
       const response = await axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
-      console.log(response.data.fileIds)
       return response.data.fileIds;
     };
-  
+
     const ids = await Promise.all(selectedFiles.map(async (file) => {
       try {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('sessionId', currentSessionId); // Add currentSessionId to the form data
-  
+
         const response = await axios.post('http://localhost:5000/api/files/', formData);
         setChatHistory([...chatHistory, { role: 'user', content: response.data.uploadedFileData.filename.substring(37) }]);
-        
+
         return response.data.fileIds; // Return the file ID
       } catch (err) {
         console.error('Error sending file:', err);
         return null; // In case of error, return null
       }
     }));
-  
-    setFilesId(ids.filter(Boolean)); // Filter out null values
-    setSelectedFiles(null);
-    return ids.filter(Boolean); // Return only successful file IDs
+
+    let flattenedIds
+    // Flatten and filter out nulls
+    if(selectedFiles.length > 1){
+       flattenedIds = ids[0].flat().filter(id => id !== null);
+    }
+    
+
+    setFilesId(flattenedIds.filter(Boolean)); // Filter out null values
+    setSelectedFiles([]);
+    return flattenedIds.filter(Boolean); // Return only successful file IDs
   };
-  
-  const handleSend= async () => {
+
+  const handleSend = async () => {
     const ids = await sendFile();
-    await sendMessage(ids);
+    // const flatIds = ids.flat(); // Flatten the array to a single-level array
+  await sendMessage(ids);
   }
-  
-  
+
+
 
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedFiles(file.name);
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      setSelectedFiles(files); // Store multiple files
     }
   };
 
@@ -97,7 +104,7 @@ function Home() {
       try {
         const response = await axios.get(`http://localhost:5000/api/sessions`);
         setSessions(response.data);
-        
+
         if (response.data.length > 0) {
           setCurrentSessionId(response.data[0].sessionId);
           setFilesId(response.data[0].filesId); // Set filesId if available;
@@ -120,7 +127,7 @@ function Home() {
         .catch(err => console.error('Error loading session:', err));
     }
   }, [currentSessionId]);
-  
+
 
   const createNewSession = async () => {
     try {
@@ -134,7 +141,7 @@ function Home() {
 
   const sendMessage = async (fileIds) => {
 
-    
+
     if (!message.trim()) return;
     setChatHistory([...chatHistory, { role: 'user', content: message }]);
     setMessage('');
@@ -153,7 +160,7 @@ function Home() {
         }),
         responseType: 'stream',
       });
-      
+
       let lastAssistantMessage = { role: 'assistant', content: response.data };
 
       setChatHistory((prevHistory) => [...prevHistory, lastAssistantMessage]);
@@ -275,16 +282,19 @@ function Home() {
                 ))}
 
               </div>
-              {selectedFiles && (
+              {selectedFiles.length > 0 && (
                 <div className="selected-file-container">
-                  <span className="selected-file-name">
-                    {selectedFiles}
-                  </span>
-                  <span className="remove-file-btn" onClick={() => setSelectedFiles("")}>
+                  {selectedFiles.map((file, index) => (
+                    <span key={index} className="selected-file-name">
+                      {file.name}
+                    </span>
+                  ))}
+                  <span className="remove-file-btn" onClick={() => setSelectedFiles([])}>
                     Xóa
                   </span>
                 </div>
               )}
+
               <div className="card-footer">
                 <div className="input-group">
                   <div className="input-group-append">
@@ -299,12 +309,13 @@ function Home() {
                       </button>
                       <input
                         type="file"
-                        accept="application/pdf"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
-                        multiple
+                        multiple // Allow multiple files
+                        accept="*/*" // Accept all file types
                       />
+
                     </span>
 
                   </div>
