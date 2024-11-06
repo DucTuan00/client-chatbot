@@ -12,14 +12,16 @@ import style from './markdown-styles.module.css';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { xonokai } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { resolvePath } from 'react-router-dom';
 
 function Home() {
   const [sessions, setSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileId, setFielId] = useState(null)
+  
+  const [selectedFiles, setSelectedFiles] = useState(null);
+  const [filesId, setFilesId] = useState([])
   const msgCardBodyRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -31,27 +33,36 @@ function Home() {
   };
 
   const sendFile = async () => {
-    if (!selectedFile) return;
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('sessionId', currentSessionId);
-
-    // src/components/home/Home.js (39-45)
-
-    try {
-      
-
-      // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
-      const response = await axios.post('http://localhost:5000/api/files/', formData);
-      // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
-      setChatHistory([...chatHistory, { role: 'file', content: response.data.filename }]);
-      setSelectedFile(null);
-    } catch (err) {
-      console.error('Error sending file:', err);
-    }
-
+    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0){
+      const response = await axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
+      console.log(response.data.fileIds)
+      return response.data.fileIds;
+    };
+  
+    const ids = await Promise.all(selectedFiles.map(async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('sessionId', currentSessionId); // Add currentSessionId to the form data
+  
+        const response = await axios.post('http://localhost:5000/api/files/', formData);
+        setChatHistory([...chatHistory, { role: 'user', content: response.data.uploadedFileData.filename.substring(37) }]);
+        
+        return response.data.fileIds; // Return the file ID
+      } catch (err) {
+        console.error('Error sending file:', err);
+        return null; // In case of error, return null
+      }
+    }));
+  
+    setFilesId(ids.filter(Boolean)); // Filter out null values
+    setSelectedFiles(null);
+    return ids.filter(Boolean); // Return only successful file IDs
   };
+  
+  
+  
+
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -82,7 +93,11 @@ function Home() {
       try {
         const response = await axios.get(`http://localhost:5000/api/sessions`);
         setSessions(response.data);
-        if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
+        
+        if (response.data.length > 0) {
+          setCurrentSessionId(response.data[0].sessionId);
+          setFilesId(response.data[0].filesId); // Set filesId if available;
+        }
       } catch (err) {
         console.error('Error fetching sessions:', err);
       }
@@ -91,13 +106,17 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    // Fetch chat messages for the selected session
+    // Fetch chat messages and files for the selected session
     if (currentSessionId) {
       axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
-        .then(response => setChatHistory(response.data.messages))
+        .then(response => {
+          setChatHistory(response.data.messages);
+          setFilesId(response.data.fileIds); // Assuming response.data.filesId contains the files array
+        })
         .catch(err => console.error('Error loading session:', err));
     }
   }, [currentSessionId]);
+  
 
   const createNewSession = async () => {
     try {
@@ -109,9 +128,10 @@ function Home() {
     }
   };
 
-  const sendMessage = async () => {
-    if (!message.trim()) return;
+  const sendMessage = async (fileIds) => {
 
+    
+    if (!message.trim()) return;
     setChatHistory([...chatHistory, { role: 'user', content: message }]);
     setMessage('');
 
@@ -124,10 +144,12 @@ function Home() {
         body: JSON.stringify({
           sessionId: currentSessionId,
           userMessage: message,
+          fileIds: fileIds,
+          fileNames: chatHistory.filter(msg => msg.role === 'filename').map(msg => msg.content),
         }),
         responseType: 'stream',
       });
-
+      
       let lastAssistantMessage = { role: 'assistant', content: response.data };
 
       setChatHistory((prevHistory) => [...prevHistory, lastAssistantMessage]);
@@ -247,6 +269,7 @@ function Home() {
                     </div>
                   </div>
                 ))}
+
               </div>
               {selectedFile && (
                 <div className="selected-file-container">
@@ -266,7 +289,7 @@ function Home() {
                         className="btn btn-default"
                         style={{ border: 'none', padding: '0' }}
                         onClick={() => fileInputRef.current.click()}
-                        multiple
+
                       >
                         <i className="fas fa-paperclip"></i>
                       </button>
@@ -276,6 +299,7 @@ function Home() {
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
+                        multiple
                       />
                     </span>
 
@@ -287,10 +311,7 @@ function Home() {
                     onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
                   <div className="input-group-append">
-                    <span className="input-group-text send_btn" onClick={() => {
-                      sendMessage();
-                      sendFile();
-                    }}>
+                    <span className="input-group-text send_btn" onClick={handleSend}>
                       <i className="fas fa-location-arrow"></i>
                     </span>
                   </div>
