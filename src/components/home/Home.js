@@ -60,6 +60,10 @@ function Home() {
     return ids.filter(Boolean); // Return only successful file IDs
   };
   
+  const handleSend= async () => {
+    const ids = await sendFile();
+    await sendMessage(ids);
+  }
   
   
 
@@ -67,7 +71,7 @@ function Home() {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file.name);
+      setSelectedFiles(file.name);
     }
   };
 
@@ -271,12 +275,12 @@ function Home() {
                 ))}
 
               </div>
-              {selectedFile && (
+              {selectedFiles && (
                 <div className="selected-file-container">
                   <span className="selected-file-name">
-                    {selectedFile}
+                    {selectedFiles}
                   </span>
-                  <span className="remove-file-btn" onClick={() => setSelectedFile("")}>
+                  <span className="remove-file-btn" onClick={() => setSelectedFiles("")}>
                     Xóa
                   </span>
                 </div>
