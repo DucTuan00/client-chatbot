@@ -214,7 +214,7 @@ function Home() {
                             return !inline && match ? (
                               <div class="code_block" style={{ position: 'relative' }}>
                                 <SyntaxHighlighter
-                                  style={xonokai} // or light, etc.
+                                  style={xonokai} 
                                   language={match[1]}
                                   PreTag="div"
                                   {...props}
@@ -278,7 +278,6 @@ function Home() {
                         onChange={handleFileChange}
                       />
                     </span>
-
                   </div>
                   <textarea
                     className="form-control type_msg"

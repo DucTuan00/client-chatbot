@@ -38,8 +38,8 @@ const Navbar = ({ userName, onUserLogin }) => {
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link to="/home" className="nav-link text-white" aria-current="page" 
-                style={{ fontFamily: '"Playwrite DE Grund", cursive', fontStyle: 'bold' }}>Home</Link>
+                <Link to="/home" className="nav-link text-white" aria-current="page"
+                  style={{ fontFamily: '"Playwrite DE Grund", cursive', fontStyle: 'bold' }}>Home</Link>
               </li>
             </ul>
             <div className="d-flex align-items-center custom-gap ms-auto">
@@ -49,15 +49,26 @@ const Navbar = ({ userName, onUserLogin }) => {
             </div>
           </div>
           <div className="d-flex gap-2 justify-content-center custom-gap">
-              <Link to="./login">
-                <button className="btn btn-outline-danger text-white" type="button" style={{ fontFamily: '"Playwrite DE Grund", cursive' }}>
-                  <span className="bi-person-circle"></span> Login
-                </button>
-              </Link>
-          </div>
-          {/* thời tiết */}
-        </div>
-      </nav>
+            {userName ? (
+              <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+              {userName}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+              <li><button className="dropdown-item" onClick={handleLogout}>Logout</button></li>
+              </ul>
+            </div>
+            ): (
+                <Link to = "./login">
+                <button className = "btn btn-outline-danger text-white" type = "button" style = {{ fontFamily: '"Playwrite DE Grund", cursive' }}>
+            <span className="bi-person-circle"></span> Login
+          </button>
+        </Link>
+            )}
+      </div>
+      {/* thời tiết */}
+    </div >
+      </nav >
     </>
   )
 }
