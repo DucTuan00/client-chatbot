@@ -12,6 +12,7 @@ import style from './markdown-styles.module.css';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { xonokai } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { resolvePath } from 'react-router-dom';
 
 function Home() {
   const [sessions, setSessions] = useState([]);
@@ -32,24 +33,35 @@ function Home() {
   };
 
   const sendFile = async () => {
-    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0) return;
-
-    // Loop through each selected file
-    Promise.all(selectedFiles.map(async (file) => {
+    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0){
+      const response = await axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
+      console.log(response.data.fileIds)
+      return response.data.fileIds;
+    };
+  
+    const ids = await Promise.all(selectedFiles.map(async (file) => {
       try {
-        // Send the file
-        const formData = new FormData(); // Use FormData for file uploads
+        const formData = new FormData();
         formData.append('file', file);
+        formData.append('sessionId', currentSessionId); // Add currentSessionId to the form data
+  
         const response = await axios.post('http://localhost:5000/api/files/', formData);
-        setChatHistory((prevHistory) => [...prevHistory, { role: 'filename', content: response.data.filename.substring(37) }, { role: 'fileid', content: response.data.id }]); // Update chat history
-        setFilesId((prevFiles) => [...prevFiles, response.data.id]); // Update filesId state
+        setChatHistory([...chatHistory, { role: 'user', content: response.data.uploadedFileData.filename.substring(37) }]);
+        
+        return response.data.fileIds; // Return the file ID
       } catch (err) {
         console.error('Error sending file:', err);
+        return null; // In case of error, return null
       }
-    })).then(() => {
-      setSelectedFiles(null);
-    });
+    }));
+  
+    setFilesId(ids.filter(Boolean)); // Filter out null values
+    setSelectedFiles(null);
+    return ids.filter(Boolean); // Return only successful file IDs
   };
+  
+  
+  
 
 
   const handleFileChange = (event) => {
@@ -58,10 +70,16 @@ function Home() {
   };
 
   const handleSend = async () => {
-    await sendFile();
-    await sendMessage();
-  };
+    const newFilesId = await sendFile(); // Get updated files IDs
 
+    // if(JSON.stringify(newFilesId)==JSON.stringify(filesId)){
+    //   await sendMessage(filesId); // Pass the updated IDs to sendMessage
+    // }else{
+    //   await sendMessage(filesId); // Pass the updated IDs to sendMessage
+    // }
+    await sendMessage(newFilesId);
+  };
+  
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
     if (msgCardBodyRef.current) {
@@ -79,7 +97,11 @@ function Home() {
       try {
         const response = await axios.get(`http://localhost:5000/api/sessions`);
         setSessions(response.data);
-        if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
+        
+        if (response.data.length > 0) {
+          setCurrentSessionId(response.data[0].sessionId);
+          setFilesId(response.data[0].filesId); // Set filesId if available;
+        }
       } catch (err) {
         console.error('Error fetching sessions:', err);
       }
@@ -88,13 +110,17 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    // Fetch chat messages for the selected session
+    // Fetch chat messages and files for the selected session
     if (currentSessionId) {
       axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
-        .then(response => setChatHistory(response.data.messages))
+        .then(response => {
+          setChatHistory(response.data.messages);
+          setFilesId(response.data.fileIds); // Assuming response.data.filesId contains the files array
+        })
         .catch(err => console.error('Error loading session:', err));
     }
   }, [currentSessionId]);
+  
 
   const createNewSession = async () => {
     try {
@@ -106,7 +132,9 @@ function Home() {
     }
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (fileIds) => {
+
+    
     if (!message.trim()) return;
     setChatHistory([...chatHistory, { role: 'user', content: message }]);
     setMessage('');
@@ -120,12 +148,12 @@ function Home() {
         body: JSON.stringify({
           sessionId: currentSessionId,
           userMessage: message,
-          fileIds: filesId,
+          fileIds: fileIds,
           fileNames: chatHistory.filter(msg => msg.role === 'filename').map(msg => msg.content),
         }),
         responseType: 'stream',
       });
-      setFilesId([])
+      
       let lastAssistantMessage = { role: 'assistant', content: response.data };
 
       setChatHistory((prevHistory) => [...prevHistory, lastAssistantMessage]);
@@ -197,7 +225,7 @@ function Home() {
                 ref={msgCardBodyRef}
                 style={{ maxHeight: '500px', overflowY: 'auto' }}
               >
-                {chatHistory.filter(msg => msg.role === "user" || msg.role === "assistant").map((msg, index) => (
+                {chatHistory.map((msg, index) => (
                   <div key={index} className={`d-flex justify-content-${msg.role === "user" ? "end" : "start"} mb-4`}>
                     <div className={`msg_cotainer${msg.role === "user" ? "_send" : ""}`}>
                       <ReactMarkdown children={msg.content}
