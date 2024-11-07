@@ -12,14 +12,16 @@ import style from './markdown-styles.module.css';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { xonokai } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { resolvePath } from 'react-router-dom';
 
 function Home() {
   const [sessions, setSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [message, setMessage] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileId, setFielId] = useState(null)
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filesId, setFilesId] = useState([])
   const msgCardBodyRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -30,40 +32,80 @@ function Home() {
     });
   };
 
-  const sendFile = async () => {
-    if (!selectedFile) return;
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('sessionId', currentSessionId);
-
-    // src/components/home/Home.js (39-45)
-
+  // Function to fetch initial sessions
+  const fetchSessions = async () => {
     try {
-      
-
-      // const response = await axios.post('http://138.2.74.16:3000/api/v1/files/', formData, config);
-      const response = await axios.post('http://localhost:5000/api/files/', formData);
-      // const response = await axios.post('http://localhost:5000/upload-pdf', formData);
-      setChatHistory([...chatHistory, { role: 'file', content: response.data.filename }]);
-      setSelectedFile(null);
+      const userId = localStorage.getItem('userId');
+      const response = await axios.get(`http://localhost:5000/api/sessions?userId=${userId}`);
+      setSessions(response.data);
+      if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
     } catch (err) {
-      console.error('Error sending file:', err);
+      console.error('Error fetching sessions:', err);
     }
-
   };
+
+  const sendFile = async () => {
+    if (!Array.isArray(selectedFiles) || selectedFiles.length === 0) {
+      const response = await axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
+      return response.data.fileIds;
+    };
+
+    const ids = await Promise.all(selectedFiles.map(async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('sessionId', currentSessionId); // Add currentSessionId to the form data
+
+        const response = await axios.post('http://localhost:5000/api/files/', formData);
+        setChatHistory([...chatHistory, { role: 'user', content: response.data.uploadedFileData.filename.substring(37) }]);
+
+        return response.data.fileIds; // Return the file ID
+      } catch (err) {
+        console.error('Error sending file:', err);
+        return null; // In case of error, return null
+      }
+    }));
+
+    // Flatten and filter out nulls
+    const filteredIds = ids.filter(id => id !== null); // Filter out nulls
+    const longestIdsArray = filteredIds.reduce((prev, current) => {
+      return (current.length > prev.length) ? current : prev; // Choose the longest array
+    }, []);
+
+    setFilesId(longestIdsArray); // Assign the longest array
+    setSelectedFiles([]);
+    return longestIdsArray; // Return the longest array
+  };
+
+  const handleSend = async () => {
+    const ids = await sendFile();
+    // const flatIds = ids.flat(); // Flatten the array to a single-level array
+    await sendMessage(ids);
+  }
+
+
+
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedFile(file.name);
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      setSelectedFiles(files); // Store multiple files
     }
   };
 
-  //Xóa session
-  const deleteSession = (event) => {
+  // Delete session function
+  const deleteSession = async (sessionId) => {
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/sessions/${sessionId}`);
+      if (response.status === 204) {
+        // Remove the deleted session from the state
+        setSessions(prevSessions => prevSessions.filter(session => session.sessionId !== sessionId));
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error.response ? error.response.data : error.message);
+    }
+  };
 
-  }
 
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
@@ -76,32 +118,26 @@ function Home() {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
     });
-
-    // Fetch initial sessions
-    async function fetchSessions() {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/sessions`);
-        setSessions(response.data);
-        if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-      }
-    }
     fetchSessions();
   }, []);
 
   useEffect(() => {
-    // Fetch chat messages for the selected session
+    // Fetch chat messages and files for the selected session
     if (currentSessionId) {
       axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
-        .then(response => setChatHistory(response.data.messages))
+        .then(response => {
+          setChatHistory(response.data.messages);
+          setFilesId(response.data.fileIds); // Assuming response.data.filesId contains the files array
+        })
         .catch(err => console.error('Error loading session:', err));
     }
   }, [currentSessionId]);
 
+
   const createNewSession = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/sessions');
+      const userId = localStorage.getItem('userId');
+      const response = await axios.post(`http://localhost:5000/api/sessions?userId=${userId}`);
       setSessions([...sessions, response.data]);
       setCurrentSessionId(response.data.sessionId);
     } catch (err) {
@@ -109,9 +145,10 @@ function Home() {
     }
   };
 
-  const sendMessage = async () => {
-    if (!message.trim()) return;
+  const sendMessage = async (fileIds) => {
 
+
+    if (!message.trim()) return;
     setChatHistory([...chatHistory, { role: 'user', content: message }]);
     setMessage('');
 
@@ -124,6 +161,8 @@ function Home() {
         body: JSON.stringify({
           sessionId: currentSessionId,
           userMessage: message,
+          fileIds: fileIds,
+          fileNames: chatHistory.filter(msg => msg.role === 'filename').map(msg => msg.content),
         }),
         responseType: 'stream',
       });
@@ -181,7 +220,7 @@ function Home() {
                         <div className="user_info">
                           <span>{session.sessionId}</span>
                         </div>
-                        <div className="delete-session" onClick={() => { deleteSession(); }}>
+                        <div className="delete-session" onClick={() => { deleteSession(session.sessionId); }}>
                           <span>Xóa</span>
                         </div>
                       </div>
@@ -214,7 +253,7 @@ function Home() {
                             return !inline && match ? (
                               <div class="code_block" style={{ position: 'relative' }}>
                                 <SyntaxHighlighter
-                                  style={xonokai} // or light, etc.
+                                  style={xonokai}
                                   language={match[1]}
                                   PreTag="div"
                                   {...props}
@@ -247,17 +286,21 @@ function Home() {
                     </div>
                   </div>
                 ))}
+
               </div>
-              {selectedFile && (
+              {selectedFiles.length > 0 && (
                 <div className="selected-file-container">
-                  <span className="selected-file-name">
-                    {selectedFile}
-                  </span>
-                  <span className="remove-file-btn" onClick={() => setSelectedFile("")}>
+                  {selectedFiles.map((file, index) => (
+                    <span key={index} className="selected-file-name">
+                      {file.name}
+                    </span>
+                  ))}
+                  <span className="remove-file-btn" onClick={() => setSelectedFiles([])}>
                     Xóa
                   </span>
                 </div>
               )}
+
               <div className="card-footer">
                 <div className="input-group">
                   <div className="input-group-append">
@@ -266,19 +309,20 @@ function Home() {
                         className="btn btn-default"
                         style={{ border: 'none', padding: '0' }}
                         onClick={() => fileInputRef.current.click()}
-                        multiple
+
                       >
                         <i className="fas fa-paperclip"></i>
                       </button>
                       <input
                         type="file"
-                        accept="application/pdf"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
+                        multiple // Allow multiple files
+                        accept="*/*" // Accept all file types
                       />
-                    </span>
 
+                    </span>
                   </div>
                   <textarea
                     className="form-control type_msg"
@@ -287,10 +331,7 @@ function Home() {
                     onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
                   <div className="input-group-append">
-                    <span className="input-group-text send_btn" onClick={() => {
-                      sendMessage();
-                      sendFile();
-                    }}>
+                    <span className="input-group-text send_btn" onClick={handleSend}>
                       <i className="fas fa-location-arrow"></i>
                     </span>
                   </div>

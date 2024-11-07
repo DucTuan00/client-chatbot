@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Loginform.css';
 import { useNavigate } from 'react-router-dom';
-
+import {jwtDecode} from 'jwt-decode'
 const Loginform = ({ onUserLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,8 +29,18 @@ const Loginform = ({ onUserLogin }) => {
             console.log(data); // Check the successful login response
     
             // Optionally, store token or user info here
-            // e.g., localStorage.setItem('token', data.token);
-            onUserLogin(email); // Pass the email or other relevant data to the parent component
+            
+            if(data.token){
+                
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userId', jwtDecode(data.token).id);
+                onUserLogin(jwtDecode(data.token).name); // Pass the email or other relevant data to the parent component
+            }else{
+                onUserLogin(null);
+            }
+            
+            
+            
     
             navigate('/'); // Navigate to home after successful login
         } catch (error) {
