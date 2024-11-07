@@ -66,22 +66,21 @@ function Home() {
       }
     }));
 
-    let flattenedIds
     // Flatten and filter out nulls
-    if(selectedFiles.length > 1){
-       flattenedIds = ids[0].flat().filter(id => id !== null);
-    }
-    
+    const filteredIds = ids.filter(id => id !== null); // Filter out nulls
+    const longestIdsArray = filteredIds.reduce((prev, current) => {
+      return (current.length > prev.length) ? current : prev; // Choose the longest array
+    }, []);
 
-    setFilesId(flattenedIds.filter(Boolean)); // Filter out null values
+    setFilesId(longestIdsArray); // Assign the longest array
     setSelectedFiles([]);
-    return flattenedIds.filter(Boolean); // Return only successful file IDs
+    return longestIdsArray; // Return the longest array
   };
 
   const handleSend = async () => {
     const ids = await sendFile();
     // const flatIds = ids.flat(); // Flatten the array to a single-level array
-  await sendMessage(ids);
+    await sendMessage(ids);
   }
 
 
@@ -119,20 +118,6 @@ function Home() {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
     });
-    // Fetch initial sessions
-    async function fetchSessions() {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/sessions`);
-        setSessions(response.data);
-
-        if (response.data.length > 0) {
-          setCurrentSessionId(response.data[0].sessionId);
-          setFilesId(response.data[0].filesId); // Set filesId if available;
-        }
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-      }
-    }
     fetchSessions();
   }, []);
 
@@ -149,7 +134,7 @@ function Home() {
   }, [currentSessionId]);
 
 
-  const createNewSession = async () => {  
+  const createNewSession = async () => {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.post(`http://localhost:5000/api/sessions?userId=${userId}`);
@@ -268,7 +253,7 @@ function Home() {
                             return !inline && match ? (
                               <div class="code_block" style={{ position: 'relative' }}>
                                 <SyntaxHighlighter
-                                  style={xonokai} 
+                                  style={xonokai}
                                   language={match[1]}
                                   PreTag="div"
                                   {...props}
