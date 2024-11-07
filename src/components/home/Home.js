@@ -32,6 +32,18 @@ function Home() {
     });
   };
 
+  // Function to fetch initial sessions
+  const fetchSessions = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await axios.get(`http://localhost:5000/api/sessions?userId=${userId}`);
+      setSessions(response.data);
+      if (response.data.length > 0) setCurrentSessionId(response.data[0].sessionId);
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
+    }
+  };
+
   const sendFile = async () => {
     if (!Array.isArray(selectedFiles) || selectedFiles.length === 0) {
       const response = await axios.get(`http://localhost:5000/api/sessions/${currentSessionId}`)
@@ -82,10 +94,19 @@ function Home() {
     }
   };
 
-  //Xóa session
-  const deleteSession = (event) => {
+  // Delete session function
+  const deleteSession = async (sessionId) => {
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/sessions/${sessionId}`);
+      if (response.status === 204) {
+        // Remove the deleted session from the state
+        setSessions(prevSessions => prevSessions.filter(session => session.sessionId !== sessionId));
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error.response ? error.response.data : error.message);
+    }
+  };
 
-  }
 
   // Cuộn đoạn chat xuống cuối khi bấm vào session
   useEffect(() => {
@@ -98,7 +119,6 @@ function Home() {
     $('#action_menu_btn').click(function () {
       $('.action_menu').toggle();
     });
-
     // Fetch initial sessions
     async function fetchSessions() {
       try {
@@ -129,9 +149,10 @@ function Home() {
   }, [currentSessionId]);
 
 
-  const createNewSession = async () => {
+  const createNewSession = async () => {  
     try {
-      const response = await axios.post('http://localhost:5000/api/sessions');
+      const userId = localStorage.getItem('userId');
+      const response = await axios.post(`http://localhost:5000/api/sessions?userId=${userId}`);
       setSessions([...sessions, response.data]);
       setCurrentSessionId(response.data.sessionId);
     } catch (err) {
@@ -214,7 +235,7 @@ function Home() {
                         <div className="user_info">
                           <span>{session.sessionId}</span>
                         </div>
-                        <div className="delete-session" onClick={() => { deleteSession(); }}>
+                        <div className="delete-session" onClick={() => { deleteSession(session.sessionId); }}>
                           <span>Xóa</span>
                         </div>
                       </div>
@@ -247,7 +268,7 @@ function Home() {
                             return !inline && match ? (
                               <div class="code_block" style={{ position: 'relative' }}>
                                 <SyntaxHighlighter
-                                  style={xonokai} // or light, etc.
+                                  style={xonokai} 
                                   language={match[1]}
                                   PreTag="div"
                                   {...props}
@@ -317,7 +338,6 @@ function Home() {
                       />
 
                     </span>
-
                   </div>
                   <textarea
                     className="form-control type_msg"
